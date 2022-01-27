@@ -132,7 +132,7 @@ void Perceptron::log() {
 }
 
 void Perceptron::eval() {
-	raz();
+	//raz();
 
 	for (auto& it : neurones_async) {
 		it.get();
