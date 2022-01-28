@@ -116,10 +116,12 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>D:\Dev\CppLibs\boost_1_76_0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>D:\Dev\CppLibs\boost_1_76_0\lib;D:\Dev\CppLibs\boost_1_76_0\stage\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -142,10 +144,12 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Neurone.cpp" />
     <ClCompile Include="Reseau.cpp" />
+    <ClCompile Include="SimpleCouche.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Neurone.h" />
     <ClInclude Include="Reseau.h" />
+    <ClInclude Include="SimpleCouche.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

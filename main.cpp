@@ -1,6 +1,6 @@
 #include <iostream>
 #include <time.h>
-#include "Reseau.h"
+#include "SimpleCouche.h"
 
 
 using namespace std;
@@ -8,9 +8,9 @@ using namespace std;
 int main(int argc, char** argv) {
 	srand(time(nullptr));
 
-	Perceptron p(3, 2, 10, *Activation::Sigmoid);
+	SimpleCouche p(3, 2, 5, *Activation::Sigmoid);
 
-	for (unsigned int i = 0; i < 4500; i++) {
+	for (unsigned int i = 0; i < 1500; i++) {
 		unsigned int a = (i % 2);
 		unsigned int b = floor((double)(i % 4) / 2);
 		unsigned int c = floor((double)(i % 8) / 4);

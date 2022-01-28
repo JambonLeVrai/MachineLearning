@@ -28,10 +28,11 @@ public:
 	vector<Connexion> get_entrees();
 	void set_deltaW(size_t c, double w);
 	void app_deltaW();
+	void app_deltaBiais(double b);
 	void log();
 
 protected:
-	vector<Connexion> entrees;				// La liste des neurones en entrée, servant à évaluer le réseau
+	vector<Connexion> entrees;					// La liste des neurones en entrée, servant à évaluer le réseau
 	//vector<Connexion> sorties;				// La liste des neurones en sortie (calculée à partir des entrées), servant à backpropagate
 	double (*fonction_activation)(double);
 	double biais;

@@ -82,6 +82,11 @@ void Neurone::app_deltaW() {
 	}
 }
 
+void Neurone::app_deltaBiais(double b)
+{
+	biais += b;
+}
+
 void Neurone::log() {
 	for (auto& it : entrees)
 		cout << it.second << endl;
