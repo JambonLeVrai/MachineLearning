@@ -15,6 +15,7 @@ class Reseau
 {
 public:
 	Reseau(size_t e, size_t s, double (*_fonction_activation)(double) = *Activation::Sigmoid);
+	Reseau(vector<NeuroneEntree*> _entrees, vector<Neurone*> _sorties, vector<Neurone*> _neurones, vector<Axone*> _axones);
 	void set_entrees(vector<double> e);
 	vector<double> get_sorties();
 	void raz();
@@ -26,4 +27,5 @@ protected:
 	vector<NeuroneEntree*> entrees;
 	vector<Neurone*> neurones;
 	vector<Neurone*> sorties;
+	vector<Axone*> axones;
 };

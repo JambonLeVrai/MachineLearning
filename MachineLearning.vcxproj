@@ -141,12 +141,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="NEAT.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Neurone.cpp" />
     <ClCompile Include="Reseau.cpp" />
     <ClCompile Include="SimpleCouche.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="NEAT.h" />
     <ClInclude Include="Neurone.h" />
     <ClInclude Include="Reseau.h" />
     <ClInclude Include="SimpleCouche.h" />

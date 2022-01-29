@@ -6,27 +6,29 @@ SimpleCouche::SimpleCouche(size_t e, size_t s, size_t h, double (*_fonction_acti
 
 	// Création des neurones cachés
 	for (int i = 0; i < h; i++) {
-		// On génère les connexions vers tous les neurones d'entrée
-		vector<Connexion> ce;
-		for (auto* it : entrees)
-			ce.push_back(*new Connexion(it, dist(generator)));
-		// On créé le neurone caché
-		Neurone* n = new Neurone(_fonction_activation, ce);
+		// On créé les neurones cachés
+		Neurone* n = new Neurone(_fonction_activation);
 		neurones.push_back(n);
+
+		// On créé les connexions vers toutes les entrées
+		for (auto entree : entrees) {
+			Axone* a = new Axone(entree, n, dist(generator));
+			axones.push_back(a);
+			n->aj_entree(a);
+			entree->aj_sortie(a);
+		}
 	}
 
 	// Gestion des neurones de sortie
-	for (auto& it : sorties) {
-		// On génère les connexions vers tous les neurones cachés
-		vector<Connexion> cs;
-		for (auto& it2 : neurones)
-			cs.push_back(*new Connexion(it2, dist(generator)));
-
-		it->aj_entrees(cs);
+	for (auto& sortie : sorties) {
+		// On créé tous les axones entre la couche cachée et la couche de sortie
+		for (auto& cache : neurones) {
+			Axone* a = new Axone(cache, sortie, dist(generator));
+			axones.push_back(a);
+			cache->aj_sortie(a);
+			sortie->aj_entree(a);
+		}
 	}
-
-	async_neurones = new boost::asio::thread_pool(neurones.size());
-	async_sorties = new boost::asio::thread_pool(sorties.size());
 
 }
 
@@ -39,28 +41,25 @@ void SimpleCouche::train(vector<double> e, vector<double> r) {
 
 	for (size_t i = 0; i < r.size(); i++) {
 		for (size_t j = 0; j < sorties[i]->get_entrees().size(); j++) {
-			sorties[i]->set_deltaW(j, 2 * (r[i] - sorties[i]->eval()) * sorties[i]->eval() * (1 - sorties[i]->eval()) * sorties[i]->get_entrees()[j].first->eval());
+			sorties[i]->get_entrees()[j]->set_delta_poids(2 * (r[i] - sorties[i]->eval()) * sorties[i]->eval() * (1 - sorties[i]->eval()) * sorties[i]->get_entrees()[j]->get_entree()->eval());
 		}
 		sorties[i]->app_deltaBiais(2 * (r[i] - sorties[i]->eval()) * sorties[i]->eval() * (1 - sorties[i]->eval()));
 	}
 
 	for (size_t i = 0; i < neurones.size(); i++) {
 		double coeff = 0;
-		// On recherche toutes les connexions avec les neurones de sortie
-		for (size_t k = 0; k < sorties.size(); k++) {
-			for (size_t l = 0; l < sorties[k]->get_entrees().size(); l++) {
-				if (sorties[k]->get_entrees()[l].first == neurones[i]) {
-					coeff += sorties[k]->get_entrees()[l].second *
-						sorties[k]->eval() * (1 - sorties[k]->eval()) *
-						2 * (r[k] - sorties[k]->eval());
-				}
-			}
+		for (size_t j = 0; j < neurones[i]->get_sorties().size();j++) {
+			Axone* axone = neurones[i]->get_sorties()[j];
+			double t = axone->get_sortie()->eval();
+			coeff += axone->get_poids() * t * (1 - t) * 2 * (r[j] - t);
 		}
 
-		for (size_t j = 0; j < neurones[i]->get_entrees().size(); j++) {
-			double deltaW = coeff * neurones[i]->eval() * (1 - neurones[i]->eval()) * neurones[i]->get_entrees()[j].first->eval();
-			neurones[i]->set_deltaW(j, deltaW);
+		for (auto entree : neurones[i]->get_entrees()) {
+			double e = neurones[i]->eval();
+			double deltaW = coeff * e * (1 - e) * entree->get_entree()->eval();
+			entree->set_delta_poids(deltaW);
 		}
+
 		neurones[i]->app_deltaBiais(coeff * neurones[i]->eval() * (1 - neurones[i]->eval()));
 	}
 
@@ -69,10 +68,8 @@ void SimpleCouche::train(vector<double> e, vector<double> r) {
 		sum += pow(sorties[i]->eval() - r[i], 2);
 	}
 
-	for (auto& it : sorties)
-		it->app_deltaW();
-	for (auto& it : neurones)
-		it->app_deltaW();
+	for (auto it : axones)
+		it->app_delta_poids();
 }
 
 void SimpleCouche::log() {

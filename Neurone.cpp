@@ -29,14 +29,13 @@ double Activation::ReLU(double x)
 	return (x >= 0) ? x : 0;
 }
 
-Neurone::Neurone(double (*_fonction_activation)(double), vector<Connexion> _entrees, double _biais)
+Neurone::Neurone(double (*_fonction_activation)(double), vector<Axone*> _entrees, vector<Axone*> _sorties, double _biais)
 {
 	entrees = _entrees;
 	biais = _biais;
 	calc = false;
 	fonction_activation = _fonction_activation;
 	val = 0;
-	deltaW.resize(entrees.size());
 }
 
 double Neurone::eval()
@@ -44,7 +43,7 @@ double Neurone::eval()
 	if (!calc) {
 		double sum = biais;
 		for (auto& it : entrees) {
-			sum += it.first->eval() * it.second;
+			sum += it->get_entree()->eval() * it->get_poids();
 		}
 
 		val = fonction_activation(sum);
@@ -57,30 +56,29 @@ void Neurone::raz() {
 	calc = false;
 }
 
-void Neurone::aj_entree(Connexion c) {
+void Neurone::aj_entree(Axone* c) {
 	entrees.push_back(c);
-	deltaW.resize(entrees.size());
 }
 
-void Neurone::aj_entrees(vector<Connexion> c) {
+void Neurone::aj_sortie(Axone* a)
+{
+	sorties.push_back(a);
+}
+
+void Neurone::aj_entrees(vector<Axone*> c) {
 	for (auto& it : c)
-		entrees.push_back(it);
-	deltaW.resize(entrees.size());
+		entrees.push_back(it);	
 }
 
-vector<Connexion> Neurone::get_entrees() {
+vector<Axone*> Neurone::get_entrees() {
 	return entrees;
 }
 
-void Neurone::set_deltaW(size_t c, double w) {
-	deltaW[c] = w;
+vector<Axone*> Neurone::get_sorties()
+{
+	return sorties;
 }
 
-void Neurone::app_deltaW() {
-	for (size_t i = 0; i < entrees.size(); i++) {
-		entrees[i].second += deltaW[i];
-	}
-}
 
 void Neurone::app_deltaBiais(double b)
 {
@@ -88,8 +86,8 @@ void Neurone::app_deltaBiais(double b)
 }
 
 void Neurone::log() {
-	for (auto& it : entrees)
-		cout << it.second << endl;
+	/*for (auto& it : entrees)
+		cout << it.second << endl;*/
 }
 
 NeuroneEntree::NeuroneEntree() : Neurone() {
@@ -101,4 +99,32 @@ double NeuroneEntree::eval() {
 
 void NeuroneEntree::set_val(double v) {
 	val = v;
+}
+
+Axone::Axone(Neurone* _entree, Neurone* _sortie, double _poids) : entree(_entree), sortie(_sortie), poids(_poids), delta_poids(0.0)
+{}
+
+void Axone::set_delta_poids(double d)
+{
+	delta_poids = d;
+}
+
+void Axone::app_delta_poids()
+{
+	poids += delta_poids;
+}
+
+double Axone::get_poids()
+{
+	return poids;
+}
+
+Neurone* Axone::get_entree()
+{
+	return entree;
+}
+
+Neurone* Axone::get_sortie()
+{
+	return sortie;
 }

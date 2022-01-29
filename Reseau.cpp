@@ -9,6 +9,11 @@ Reseau::Reseau(size_t e, size_t s, double (*_fonction_activation)(double))
 		sorties.push_back(new Neurone(_fonction_activation));
 }
 
+Reseau::Reseau(vector<NeuroneEntree*> _entrees, vector<Neurone*> _sorties, vector<Neurone*> _neurones, vector<Axone*> _axones) :
+	entrees(_entrees), sorties(_sorties), neurones(_neurones), axones(_axones)
+{
+}
+
 void Reseau::raz() {
 	for (auto& it : neurones) {
 		it->raz();

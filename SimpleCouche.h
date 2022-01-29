@@ -11,6 +11,4 @@ public:
 	void log();
 private:
 	void eval();
-
-	boost::asio::thread_pool* async_neurones, * async_sorties;
 };
