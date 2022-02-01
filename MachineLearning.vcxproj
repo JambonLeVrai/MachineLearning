@@ -117,6 +117,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>D:\Dev\CppLibs\boost_1_76_0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -144,12 +145,14 @@
     <ClCompile Include="NEAT.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Neurone.cpp" />
+    <ClCompile Include="Outils.cpp" />
     <ClCompile Include="Reseau.cpp" />
     <ClCompile Include="SimpleCouche.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="NEAT.h" />
     <ClInclude Include="Neurone.h" />
+    <ClInclude Include="Outils.h" />
     <ClInclude Include="Reseau.h" />
     <ClInclude Include="SimpleCouche.h" />
   </ItemGroup>
