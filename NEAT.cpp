@@ -73,7 +73,7 @@ Genome::Genome(size_t _entrees, vector<GeneConnexion> _connexions, vector<GeneNo
         entrees.push_back(*new GeneNoeud(i));
 }
 
-Genome::Genome(Genome* g, Mutation mutation)
+Genome::Genome(Genome* g, Mutation::Type mutation)
 {
     connexions = g->connexions;
     noeuds = g->noeuds;
@@ -81,6 +81,8 @@ Genome::Genome(Genome* g, Mutation mutation)
     sorties = g->sorties;
     innovation = g->innovation;
     nombre_connexions_desac = g->nombre_connexions_desac;
+
+    mute(mutation);
 }
 
 Genome::Genome(Genome* p1, Genome* p2)
@@ -165,7 +167,7 @@ void Genome::mutation_ajoute_connexion()
         connexions_interdites.push_back(get_connexion(*new pair<size_t, size_t>(i, i), max));
 
     // On ne peut pas dupliquer une connexion, même désactivée, et la connexion ne peut pas exister dans les deux sens
-    for (auto it : connexions) {
+    for (auto &it : connexions) {
         connexions_interdites.push_back(get_connexion(*new pair<size_t, size_t>(it.get_entree(), it.get_sortie()), max));
         connexions_interdites.push_back(get_connexion(*new pair<size_t, size_t>(it.get_sortie(), it.get_entree()), max));
     }
@@ -197,7 +199,7 @@ void Genome::mutation_ajoute_noeud()
 {
     int max = connexions.size() - 1 - nombre_connexions_desac;
     if (max < 0)
-        throw ExceptionPasDeNoeudDisponible();
+        throw ExceptionAucuneConnexion();
 
     // On choisit une connexion sur laquelle introduire un nouveau noeud, par référence vers les connexions disponibles
     size_t ref = Outils::aleatoire_i<size_t>(0, max);
@@ -283,6 +285,108 @@ void Genome::mutation_supprime_connexion()
     }
 }
 
+void Genome::mute(Mutation::Type mutation)
+{
+    switch (mutation) {
+    case Mutation::Type::ActiveConnexion:
+        try {
+            mutation_active_connexion();
+        }
+        catch (const ExceptionToutesConnexionsActives& e) {
+            // Aucune connexion inactive, on ajoute une connexion à la place
+            try {
+                mutation_ajoute_connexion();
+            }
+            catch (const ExceptionPasDeNoeudDisponible& e) {
+                // Impossible d'ajouter une connexion, elles existent toutes (et sont toutes actives)
+                try {
+                    mutation_ajoute_noeud();
+                }
+                catch (const ExceptionAucuneConnexion& e) {
+                    // Impossible de couper une connexion en deux, ce qui ne devrait jamais arriver (puisque toutes les connexions sont disponibles)
+                    cerr << "Erreur magique...?" << endl;
+                }
+            }
+        }
+        break;
+    case Mutation::Type::AjouteConnexion:
+        try {
+            mutation_ajoute_connexion();
+        }
+        catch (const ExceptionPasDeNoeudDisponible& e) {
+            // Impossible d'ajouter une connexion, elles existent toutes
+            try {
+                    mutation_ajoute_noeud();
+            }
+            catch (const ExceptionAucuneConnexion& e) {
+                // Impossible d'ajouter un noeud sur une connexion, ce qui ne devrait pas pouvoir arriver si toutes les connexions existent
+                cerr << "Erreur magique...?" << endl;
+            }
+        }
+        break;
+    case Mutation::Type::AjouteNoeud:
+        try {
+            mutation_ajoute_noeud();
+        }
+        catch (const ExceptionAucuneConnexion& e) {
+            // Aucune connexion n'est disponible, on en ajoute donc
+            try {
+                mutation_ajoute_connexion();
+            }
+            catch (const ExceptionPasDeNoeudDisponible& e) {
+                // Ne devrait jamais arriver
+                cerr << "Erreur magique...?" << endl;
+            }
+        }
+        break;
+    case Mutation::Type::ModifiePoids:
+        mutation_modifie_poids();
+        break;
+    case Mutation::Type::SupprimeConnexion:
+        try {
+            mutation_supprime_connexion();
+        }
+        catch (const ExceptionAucuneConnexion& e) {
+            // Aucune connexion ne peut être supprimée, on supprime un noeud à la place
+            try {
+                mutation_supprime_noeud();
+            }
+            catch (const ExceptionAucunNoeud& e) {
+                // Aucun noeud ne peut être supprimé, il n'y a pas de connexion, la seule chose à faire reste à ajouter une connexion
+                try {
+                    mutation_ajoute_connexion();
+                }
+                catch (const ExceptionPasDeNoeudDisponible& e) {
+                    // Ne devrait jamais arriver
+                    cerr << "Erreur magique...?" << endl;
+                }
+            }
+        }
+        break;
+    case Mutation::Type::SupprimeNoeud:
+        try {
+            mutation_supprime_noeud();
+        }
+        catch (const ExceptionAucunNoeud& e) {
+            // Aucun noeud ne peut être supprimé, on supprime donc une connexion à la place
+            try {
+                mutation_supprime_connexion();
+            }
+            catch (const ExceptionAucuneConnexion& e) {
+                // Il n'y a aucun noeud, et aucune connexion ; il ne reste plus qu'à créer une connexion
+                try {
+                    mutation_ajoute_connexion();
+                }
+                catch (const ExceptionPasDeNoeudDisponible& e) {
+                    // Ne devrait jamais arriver
+                    cerr << "Erreur magique...?" << endl;
+                }
+            }
+        }
+        break;
+    }
+}
+
 double Genome::distance(int c_1, int c_2, int c_3, Genome* g)
 {
     unsigned int E = 0;
@@ -322,22 +426,83 @@ double Genome::distance(int c_1, int c_2, int c_3, Genome* g)
     }
     size_t N = max({connexions.size(), c.size()});
 
-    return c_1*E/N + c_2*D/N + c_3*poids_diff;
+    return (double)c_1*E/N + (double)c_2*D/N + c_3*poids_diff;
 }
 
-Mutation MutationProba::get_mutation_aleatoire()
+NEAT::NEAT(size_t entrees, size_t sorties, size_t nb_genomes_initiaux)
 {
-    double max_proba = 0.0;
-    for (auto it : probas_mutations)
-        max_proba += it.second;
-    
-    double res = Outils::aleatoire_f(0.0, max_proba);
-    
-    double val = 0.0;
-    for (auto it : probas_mutations) {
-        val += it.second;
-        if (res < val)
-            return it.first;
+    // On commence par générer tous les gènes correspondant aux sorties
+    vector<GeneNoeud> genes_sortie;
+    for (size_t i = 0; i < sorties; i++)
+        genes_sortie.push_back(*new GeneNoeud(entrees + i)); // Les id des gènes de noeuds de sortie doivent suivre les id des noeuds en entrée
+
+    // On génère le génome "vide" initial, qui ne contient que les noeuds d'entrée et de sortie
+    Genome* g0 = new Genome(entrees, vector<GeneConnexion>(), vector<GeneNoeud>(), genes_sortie);
+
+    // On génère un certain nombre de génomes initiaux en faisant muter le génome vide
+    queue<Genome*> genomes_initiaux;
+    for (size_t i = 0; i < nb_genomes_initiaux; i++) {
+        // On démarre forcément avec une connexion
+        Genome* g = new Genome(g0, Mutation::Type::AjouteConnexion);
+        // Une chance sur deux d'ajouter un noeud à la connexion
+        if (Outils::aleatoire_i<size_t>(0, 1))
+            g->mute(Mutation::Type::AjouteNoeud);
+        // Une chance sur deux d'ajouter une seconde connexion
+        if (Outils::aleatoire_i<size_t>(0, 1))
+            g->mute(Mutation::Type::AjouteConnexion);
+
+        genomes_initiaux.push(g);
     }
-    return probas_mutations.begin()->first;
+
+    // On trie maintenant les génomes initiaux en espèces
+    while (!genomes_initiaux.empty()) {
+        // On considère un génome
+        Genome* g = genomes_initiaux.front();
+
+        if (especes.empty()) {
+            // Le premier génome créé une nouvelle espèce
+            especes.push_back(*new Espece(1, GenomeMesure(g, nullopt)));
+        }
+        else {
+            // On cherche si le génome considéré correspond à une espèce
+            bool trouve = false;
+            for (auto it : especes) {
+                if (g->distance(C1, C2, C3, it.front().first) < seuil_diff) {
+                    // On a trouvé une espèce qui correspond à ce génome
+                    it.push_back(*new GenomeMesure(g, nullopt));
+                    trouve = true;
+                    break;
+                }
+            }
+            if (!trouve) {
+                // Le génome ne correspond à aucune espèce, on créé une nouvelle espèce
+                especes.push_back(*new Espece(1, GenomeMesure(g, nullopt)));
+            }
+        }
+
+        // On passe au suivant
+        genomes_initiaux.pop();
+    }
+}
+
+void NEAT::set_coeffs(double _c1, double _c2, double _c3, double _seuil_diff)
+{
+    C1 = _c1;
+    C2 = _c2;
+    C3 = _c3;
+    seuil_diff = _seuil_diff;
+}
+
+void NEAT::evolue()
+{
+    // On commence par évaluer tous les réseaux qui ne l'ont pas encore été
+    for (auto& it : especes) {
+        for (auto& it2 : it) {
+            if (!it2.second) {
+                it2.second = mesure_aptitude(it2.first);
+            }
+        }
+    }
+
+    // On trie
 }

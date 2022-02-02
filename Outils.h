@@ -3,12 +3,13 @@
 #include <random>
 #include <iostream>
 #include <exception>
+#include <map>
 
 using namespace std;
 
 struct ExceptionAleatoire : public exception {
 	const char* what() const throw () {
-		return u8"Impossible de générer un nombre aléatoire";
+		return "Impossible de générer un nombre aléatoire";
 	}
 };
 
@@ -20,6 +21,9 @@ public:
 
 	template<typename T>
 	static T aleatoire_i(T min, T max);
+
+	template<typename T>
+	static T aleatoire_table(map<T, unsigned int> table);
 
 	static default_random_engine generator;
 };
