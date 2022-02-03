@@ -8,8 +8,8 @@
 
 class GenomeMesure {
 public:
-	GenomeMesure(pair<Genome*, optional<double>> _val);
-	GenomeMesure(Genome* g, optional<double> m = nullopt);
+	GenomeMesure(pair<Genome, optional<double>> _val);
+	GenomeMesure(Genome g, optional<double> m = nullopt);
 
 	Genome* get_genome();
 	optional<double> get_mesure();
@@ -18,8 +18,16 @@ public:
 	bool operator<(const GenomeMesure &g2);
 
 private:
-	pair<Genome*, optional<double>> val;
+	pair<Genome, optional<double>> val;
 };
+
+/*class Espece {
+public:
+	Espece(vector<GenomeMesure> _val);
+
+private:
+	vector<GenomeMesure> val;
+};*/
 
 typedef vector<GenomeMesure> Espece; // Contient l'ensemble des génomes d'une même espèce
 

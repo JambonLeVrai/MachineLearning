@@ -75,7 +75,7 @@ namespace Mutation {
 		AjouteConnexion, AjouteNoeud, ModifiePoids, SupprimeNoeud, ActiveConnexion, SupprimeConnexion
 	};
 
-	const map<Type, int> probas_mutations = {
+	const map<Type, unsigned int> probas_mutations = {
 		{Type::AjouteConnexion, 8},
 		{Type::AjouteNoeud, 4},
 		{Type::ModifiePoids, 20},

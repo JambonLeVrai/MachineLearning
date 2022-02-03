@@ -87,6 +87,63 @@ Genome::Genome(Genome* g, Mutation::Type mutation)
 
 Genome::Genome(Genome* p1, Genome* p2)
 {
+    // Normalement les entrées et les sorties sont les mêmes, donc on peut juste les copier
+    entrees = p1->entrees;
+    // Attention au cas de l'ajout de biais aux sorties !! Il faudra modifier ce code
+    sorties = p1->sorties;
+
+    bool end = false;
+    size_t i = 0, j = 0; // i pour la position du curseur sur p1 et j pour la position du curseur sur p2
+    size_t current_id = 0;
+    while (!end) {
+        if (i >= p1->connexions.size() && j >= p2->connexions.size()) {
+            end = true;
+        }
+        else {
+            if (i < p1->connexions.size() && j < p2->connexions.size()) {
+                if (p1->connexions[i].get_innovation() == p2->connexions[j].get_innovation()) {
+                    // Le gène est identique sur les deux connexions, donc on en choisit un au hasard
+                    size_t test = Outils::aleatoire_i<size_t>(0, 1);
+                    if (test == 0)
+                        connexions.push_back(p1->connexions[i]);
+                    else
+                        connexions.push_back(p2->connexions[j]);
+
+                    // Si le gène est désactivé chez l'un des deux parents, il a 75% de chances d'être hérité désactivé
+                    if (!p1->connexions[i].get_actif() || !p2->connexions[j].get_actif()) {
+                        size_t test2 = Outils::aleatoire_i<size_t>(0, 3);
+                        if (test2 <= 0.25)
+                            connexions.back().active();
+                        else
+                            connexions.back().desactive();
+                    }
+
+                    i++;
+                    j++;
+                }
+                else if(p1->connexions[i].get_innovation() < p2->connexions[j].get_innovation()) {
+                    connexions.push_back(p1->connexions[i]);
+                    i++;
+                }
+                else {
+                    connexions.push_back(p2->connexions[j]);
+                    j++;
+                }
+            }
+            else if (i < p1->connexions.size()) {
+                // On ajoute les gènes en excès de p1
+                connexions.push_back(p1->connexions[i]);
+                i++;
+            }
+            else if (j < p2->connexions.size()) {
+                // On ajoute les gènes en excès de p2
+                connexions.push_back(p2->connexions[j]);
+                j++;
+            }
+            if (!connexions.back().get_actif())
+                nombre_connexions_desac++;
+        }
+    }
 }
 
 void Genome::genere_reseau()
